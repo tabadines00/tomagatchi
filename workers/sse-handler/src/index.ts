@@ -4,9 +4,25 @@ export interface Env {
 	DB: D1Database;
 }
 
+interface Toma {
+	tomaId: number;
+	name: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+interface Event {
+    eventId: number;
+    ownerId: number;
+    eventType: string;
+    eventValue: number;
+    eventRate: number;
+    updatedAt: string;
+}
+
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { streamSSE } from 'hono/streaming'
+import { stream, streamSSE } from 'hono/streaming'
 import { html, raw } from 'hono/html'
 
 
@@ -40,13 +56,15 @@ html`<!DOCTYPE html>
 
         const eventSource = new EventSource("/sse/stream", { withCredentials: true });
 
-        eventSource.addEventListener("time-update", (event) => {
+        eventSource.addEventListener("int-update", (event) => {
 			console.log("added another line", event)
+			const data = JSON.parse(event.data);
+  			console.log('Updated integer:', data.value);
             //sseData.innerHTML += event.data + '<br>';
 
 			const newElement = document.createElement("li");
 
-			newElement.textContent = "message: "+event.data+" and ID is "+event.lastEventId;
+			newElement.textContent = "" +data.name+ " has hunger: "+data.hunger+" and ID is "+event.lastEventId;
 			sseData.appendChild(newElement);
 		});
 
@@ -72,24 +90,47 @@ app.use('/sse/*', async (c, next) => {
 
 let id = 0
 
-app.get('/sse/stream', async (c) => {
-  return streamSSE(c, async (stream) => {
+app.get('/sse/:toma', async (c) => {
+  	return streamSSE(c, async (stream) => {
+	
 	console.log("Opening Stream")
-    while (id < 10) {
-      const message = `It is ${new Date().toISOString()}`
-      await stream.writeSSE({
-        data: message,
-        event: 'time-update',
-        id: String(id++),
-      })
-	  console.log("Wrote to stream!", id)
-      await stream.sleep(1000)
-    }
-	console.log("closing stream!")
-	await stream.writeSSE({data: "", event:"close"})
-	await stream.close()
-	id = 0
-  })
+	// const { toma } = c.req.param()
+	// const { results } = await c.env.DB.prepare(
+	// 	"SELECT * FROM Tomas WHERE tomaName = ?",
+	// ).bind(toma).all();
+
+	// const data: Toma = results[0] as unknown as Toma
+
+	// const events = await c.env.DB.prepare(
+	// 	"SELECT * FROM Events WHERE ownerId = ?",
+	// ).bind(data.tomaId).all().then((r)=>r.results)
+
+	let data = {name: "Tom", hunger: 10}
+
+		while (true) {
+			if (c.req.raw.signal.aborted) {
+				console.log('Aborted')
+				break
+			}
+			data.hunger -= 1
+			await stream.writeSSE({
+				data: JSON.stringify(data),
+				event: 'int-update',
+				id: String(id++),
+			})
+			console.log("Wrote to stream!", id)
+			await stream.sleep(1000)
+		}
+	// console.log("closing stream!")
+	// await stream.writeSSE({data: "", event:"close"})
+	// await stream.close()
+	// id = 0
+	},
+	async (err, stream) => {
+		stream.writeln('An error occurred!')
+		console.error(err)
+	}
+)
 	// const stream = c.res.writeableStream();
     // const writer = stream.getWriter();
 

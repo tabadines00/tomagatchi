@@ -1,15 +1,20 @@
 DROP TABLE IF EXISTS Customers;
-CREATE TABLE IF NOT EXISTS Customers (
-    CustomerId INTEGER PRIMARY KEY,
-    CompanyName TEXT,
-    ContactName TEXT
+
+CREATE TABLE IF NOT EXISTS Tomas (
+    tomaId INTEGER PRIMARY KEY,
+    tomaName TEXT NOT NULL,
+    createdAt TIMESTAMP NOT NULL DEFAULT current_timestamp
+    updatedAt TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 
-INSERT INTO Customers (
-    CustomerID,
-    CompanyName,
-    ContactName
-) VALUES    (1, 'Alfreds Futterkiste', 'Maria Anders'),
-            (4, 'Around the Horn', 'Thomas Hardy'),
-            (11, 'Bs Beverages', 'Victoria Ashworth'),
-            (13, 'Bs Beverages', 'Random Name');
+CREATE TABLE IF NOT EXISTS Events (
+    eventId INTEGER PRIMARY KEY,
+    ownerId INTEGER NOT NULL,
+    eventType TEXT NOT NULL,
+    eventValue INTEGER NOT NULL,
+    eventRate INTEGER NOT NULL,
+    updatedAt TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+INSERT INTO Tomas (tomaId, tomaName) VALUES (NULL, "Thomas");
+
